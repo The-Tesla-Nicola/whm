@@ -1,0 +1,46 @@
+<svg width="500" height="500" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="50" height="50" fill="#f0f0f0" stroke="#333" stroke-width="0.1"/>
+
+  <g stroke="#ccc" stroke-width="0.05">
+    <line x1="10" y1="0" x2="10" y2="50"/>
+    <line x1="20" y1="0" x2="20" y2="50"/>
+    <line x1="30" y1="0" x2="30" y2="50"/>
+    <line x1="40" y1="0" x2="40" y2="50"/>
+    <line x1="0" y1="10" x2="50" y2="10"/>
+    <line x1="0" y1="20" x2="50" y2="20"/>
+    <line x1="0" y1="30" x2="50" y2="30"/>
+    <line x1="0" y1="40" x2="50" y2="40"/>
+  </g>
+
+  <g fill="#606060" stroke="#333" stroke-width="0.1">
+    <rect x="10" y="10" width="10" height="10" />
+    <text x="15" y="15" font-family="Arial" font-size="2" fill="white" text-anchor="middle" alignment-baseline="middle">Rack A</text>
+
+    <rect x="30" y="5" width="8" height="15" />
+    <text x="34" y="12.5" font-family="Arial" font-size="2" fill="white" text-anchor="middle" alignment-baseline="middle">Rack B</text>
+
+    <rect x="5" y="35" width="12" height="6" />
+    <text x="11" y="38" font-family="Arial" font-size="2" fill="white" text-anchor="middle" alignment-baseline="middle">Rack C</text>
+  </g>
+
+  <g fill="#f44336" stroke="#c62828" stroke-width="0.1">
+    <rect x="0" y="0" width="10" height="5" />
+    <text x="5" y="2.5" font-family="Arial" font-size="2" fill="white" text-anchor="middle" alignment-baseline="middle">Loading</text>
+    <text x="5" y="4.5" font-family="Arial" font-size="2" fill="white" text-anchor="middle" alignment-baseline="middle">Dock</text>
+
+    <rect x="45" y="45" width="5" height="5" />
+    <text x="47.5" y="47.5" font-family="Arial" font-size="2" fill="white" text-anchor="middle" alignment-baseline="middle">Office</text>
+  </g>
+
+  <g fill="#2196F3" stroke="#1976D2" stroke-width="0.1">
+    <circle cx="0" cy="0" r="1"/>
+    <text x="0" y="-1" font-family="Arial" font-size="2" fill="black" text-anchor="middle">A1</text>
+    <circle cx="50" cy="0" r="1"/>
+    <text x="50" y="-1" font-family="Arial" font-size="2" fill="black" text-anchor="middle">A2</text>
+    <circle cx="50" cy="50" r="1"/>
+    <text x="50" y="51" font-family="Arial" font-size="2" fill="black" text-anchor="middle">A3</text>
+    <circle cx="0" cy="50" r="1"/>
+    <text x="0" y="51" font-family="Arial" font-size="2" fill="black" text-anchor="middle">A4</text>
+  </g>
+
+</svg>
