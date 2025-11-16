@@ -47,11 +47,11 @@ Navigation: Guiding a person (or robot) through a complex building, just like in
 
 ## Project Structure
 Warehouse_Project/
-├── server.py
-├── db.py
-├── warehouse.db    //created while runtime of db.py
-├── templates/
-│   └── index.html 
-└── static/
-    └── map.svg          // custom map file
+├── server.py                                                                                                                                                      
+├── db.py                                                                                                                                                          
+├── warehouse.db    //created while runtime of db.py                                                                                                               
+├── templates/                                                                                                                                                     
+│   └── index.html                                                                                                                                                 
+└── static/                                                                                                                                                        
+    └── map.svg          // custom map file                                                                                                                        
 
