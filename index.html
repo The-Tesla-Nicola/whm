@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multi-Tag Warehouse Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; margin: 0; }
+        h1, h2 { text-align: center; }
+        #main-content { display: flex; flex-direction: row; flex-wrap: wrap; }
+        #map-container { position: relative; width: 520px; height: 520px; border: 1px solid #ccc; }
+        #map-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        #map-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
+        #controls { padding: 10px; border: 1px solid #ccc; margin: 10px; background: #f9f9f9; }
+        #qr-container { padding: 10px; text-align: center; }
+        /* Simple responsive for mobile */
+        @media (max-width: 600px) {
+            #main-content { flex-direction: column; }
+            #map-container { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+            #controls { width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Warehouse RTLS Dashboard</h1>
+    <div id="main-content">
+        <div id="map-container">
+            <img id="map-svg" src="/static/map.svg" alt="Warehouse Map">
+            <canvas id="map-canvas" width="520" height="520"></canvas>
+        </div>
+        <div id="controls">
+            <h2>Controls</h2>
+            <label for="tag-selector"><b>Selected Tag:</b></label>
+            <select id="tag-selector" onchange="drawAll()"></select>
+            <hr>
+            <div id="status">Tag Position: (-, -)</div>
+            <hr>
+            <label for="dest-selector"><b>Destination:</b></label>
+            <select id="dest-selector"></select>
+            <br><br>
+            <button onclick="computePath()">Get Path for Selected Tag</button>
+            <hr>
+            <button onclick="toggleVoice()">Voice Guidance (Off)</button>
+            <div id="qr-container">
+                <h3>Mobile View</h3>
+                <img src="/qr_code" alt="Scan for mobile view">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('map-canvas');
+        const ctx = canvas.getContext('2d');
+        const scale = 10.4; // 520px / 50m = 10.4 px/m
+        
+        let tagPositions = {}; // { 'TAG_001': {x, y}, ... }
+        let tagPaths = {};     // { 'TAG_001': [...path...], ... }
+        let voiceEnabled = false;
+
+        // --- Draw Map & Tags ---
+        function drawAll() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+            let selectedTag = document.getElementById('tag-selector').value;
+
+            for (const tag_id in tagPositions) {
+                const pos = tagPositions[tag_id];
+                if (tag_id == selectedTag) {
+                    drawPoint(pos.x, pos.y, 'lime', 10);
+                    drawPoint(pos.x, pos.y, 'black', 2);
+                    document.getElementById('status').innerText = `Tag ${tag_id} Pos: (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)})`;
+                } else {
+                    drawPoint(pos.x, pos.y, 'gray', 7);
+                }
+            }
+            if (tagPaths[selectedTag]) {
+                drawPath(tagPaths[selectedTag]);
+            }
+        }
+
+        function drawPoint(x, y, color='blue', size=5) {
+            ctx.beginPath();
+            ctx.arc(x*scale, y*scale, size, 0, 2*Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function drawPath(path) {
+            if (path.length < 2) return;
+            ctx.strokeStyle = 'orange'; ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(path[0][0]*scale, path[0][1]*scale);
+            for (let i = 1; i < path.length; i++) {
+                ctx.lineTo(path[i][0]*scale, path[i][1]*scale);
+            }
+            ctx.stroke();
+            drawPoint(path[path.length-1][0], path[path.length-1][1], 'red', 6);
+        }
+
+        // --- Tag Management ---
+        function updateTagSelector(tag_id) {
+            const selector = document.getElementById('tag-selector');
+            if (!selector.querySelector(`option[value="${tag_id}"]`)) {
+                let option = document.createElement('option');
+                option.value = tag_id;
+                option.text = tag_id;
+                selector.appendChild(option);
+            }
+        }
+
+        // --- Destination & Path ---
+        function loadDestinations() {
+            fetch('/destinations')
+                .then(res => res.json())
+                .then(dests => {
+                    const selector = document.getElementById('dest-selector');
+                    selector.innerHTML = ''; // Clear
+                    dests.forEach(dest => {
+                        let option = document.createElement('option');
+                        option.value = dest.name;
+                        option.text = `${dest.name} (${dest.x}, ${dest.y})`;
+                        selector.appendChild(option);
+                    });
+                });
+        }
+
+        function computePath() {
+            const selectedTag = document.getElementById('tag-selector').value;
+            const destName = document.getElementById('dest-selector').value;
+            if (!selectedTag || !destName) {
+                alert("Please select a tag and a destination.");
+                return;
+            }
+
+            fetch('/path', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ tag_id: selectedTag, dest_name: destName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                tagPaths[data.tag_id] = data.path;
+                drawAll();
+                // --- Voice Guidance (Enhancement #4) ---
+                if (voiceEnabled && data.path.length > 0) {
+                    speak(`Path calculated for ${data.tag_id} to ${destName}.`);
+                    // Here you would add turn-by-turn logic by analyzing the path array
+                }
+            });
+        }
+
+        // --- Voice Guidance ---
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            const btn = document.querySelector('button[onclick="toggleVoice()"]');
+            btn.innerText = `Voice Guidance (${voiceEnabled ? "On" : "Off"})`;
+            if (voiceEnabled) speak("Voice guidance enabled.");
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // --- Socket.IO Listeners ---
+        socket.on('position_update', function(data) {
+            // data = { id: 'TAG_001', x: 12.3, y: 45.6 }
+            updateTagSelector(data.id);
+            tagPositions[data.id] = { x: data.x, y: data.y };
+            drawAll(); // Redraw all tags
+        });
+
+        // --- Init ---
+        loadDestinations();
+    </script>
+</body>
+</html>
